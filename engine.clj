@@ -8,5 +8,4 @@
   :has-mine ; whether there is a mine in this cell
   :mark) ; either 'c for checked, 'f for flagged, or nil for neither
 
-(defstruct game
-  :
+(defn new-game [:n]
