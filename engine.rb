@@ -100,7 +100,7 @@ class Game
       @grid[(row * width)..((row * width) + width - 1)].join " "
     end
     return "+" + ("--" * width) + "-+\n| " + rows.join(" |\n| ") + " |\n+" +
-      ("--" * width) + "-|"
+      ("--" * width) + "-+"
     return "foo"
   end
   def finish win
