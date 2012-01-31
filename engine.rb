@@ -10,7 +10,7 @@
 class Cell
   "A single cell in the game grid"
   attr_reader :hasMine, :mark, :game
-  attr_accessor :adjacent, :pos
+  attr_accessor :adjacent
   def initialize hasMine, mark, game, adjacent
     @hasMine = hasMine or false
     @mark = mark
@@ -73,13 +73,6 @@ class Game
                          -1,         0,      1,
                          width - 1,  width,  width + 1]
         adjacentCells.each_with_index do |cellIndex, position|
-          puts "i:#{index} p:#{position} r:#{row} e:" +
-            ((0 == position / 3 and 0 == row) or
-             (2 == position / 3 and row >= height - 1) or
-             (0 == position % 3 and 0 == col) or
-             (2 == position % 3 and col >= width - 1) or
-             (4 == position)).to_s if false
-          
           next if ((0 == position / 3 and 0 == row) or
                    (2 == position / 3 and row >= height - 1) or
                    (0 == position % 3 and 0 == col) or
@@ -87,7 +80,6 @@ class Game
                    (4 == position))
           @grid[index].adjacent.push @grid[index + cellIndex]
         end
-        @grid[index].pos = [row, col]
       end
     end
     
@@ -113,11 +105,16 @@ end
 # tests
 if $0 == __FILE__
   g = Game.new 6, 6, 10
-  puts g
   
   g.grid[35].flag
   puts g
   
   g.grid[0].check
+  puts g
+  
+  g.grid[5].check
+  puts g
+  
+  g.grid[30].check
   puts g
 end
