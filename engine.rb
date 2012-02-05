@@ -48,11 +48,13 @@ class Cell
         @game.finish false
       else
         @mark = :c
+        @game.movesFound = true
         if "0" == self.to_s
           @adjacent.each{|cell| cell.check}
         end
       end
     end
+    @game.check
   end
   def flag
     "Handle a right-click on this cell flagging it as having a mine"
@@ -60,23 +62,39 @@ class Cell
     case @mark
     when nil
       @mark = :f
+      @game.movesFound = true
     when :f
       @mark = nil
     end
+    @game.check
   end
   def checkAdjacent
     "Check all Cells adjacent to this one if Cell's mines have been accounted
       for by flags"
+    return if @game.over
     return unless :c == @mark
     adjMines = @adjacent.count{|cell| cell.hasMine}
     adjFlags = @adjacent.count{|cell| :f == cell.mark}
-    @adjacent.each{|cell| cell.check} if adjFlags >= adjMines
+    if adjFlags >= adjMines
+      @adjacent.each{|cell| cell.check}
+    end
+  end
+  def flagAdjacent
+    "Flag all Cells adjacent to this one if all of them must be mines"
+    return if @game.over
+    return unless :c == @mark
+    adjMines = @adjacent.count{|cell| cell.hasMine}
+    adjUnchecked = @adjacent.count{|cell| cell.mark.nil?}
+    adjFlags = @adjacent.count{|cell| :f == cell.mark}
+    if adjUnchecked + adjFlags == adjMines
+      @adjacent.each{|cell| cell.flag if cell.mark.nil?}
+    end
   end
 end
 
 class Game
   "A game of minesweeper"
-  attr_accessor :dimensions, :grid, :over
+  attr_accessor :dimensions, :grid, :over, :movesFound
   def initialize height, width, mines
     @dimensions = {:height => height, :width => width}
     @grid = []
@@ -87,7 +105,7 @@ class Game
       @grid.push Cell.new hasMine, nil, self, []
     end
     
-    # computer adjacency
+    # compute adjacency
     height.times do |row|
       width.times do |col|
         index = (row * width) + col
@@ -106,6 +124,7 @@ class Game
     end
     
     @over = false
+    @movesFound = false
   end
   def [] row, col
     "Access the grid"
@@ -113,8 +132,8 @@ class Game
   end
   def to_s
     "Display the grid"
-    height = dimensions[:width]
-    width = dimensions[:height]
+    height = dimensions[:height]
+    width = dimensions[:width]
     rows = height.times.map do |row|
       @grid[(row * width)..((row * width) + width - 1)].join " "
     end
@@ -122,11 +141,28 @@ class Game
       ("--" * width) + "-+"
     return "foo"
   end
+  def check
+    "Check whether the game has been won"
+    return if @over
+    @grid.each do |cell|
+      return if cell.mark.nil?
+    end
+    self.finish true
+  end
   def finish win
-    "End the game: takes a boolian of whether the game was won or lost."
+    "End the game: takes a boolian of whether the game was won or lost"
     @over = true
+    puts self
     puts "Game Over"
-    puts (win and "you win!") or "you lose"
+    puts win ? "you win!" : "you lose"
+  end
+  def doObviousMoves
+    "Make all moves that are obvious"
+    @movesFound = true
+    while @movesFound
+      @movesFound = false
+      @grid.each{|cell| cell.checkAdjacent; cell.flagAdjacent}
+    end
   end
 end
 
