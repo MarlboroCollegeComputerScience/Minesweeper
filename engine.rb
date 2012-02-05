@@ -94,6 +94,7 @@ end
 
 class Game
   "A game of minesweeper"
+  attr_reader :mines
   attr_accessor :dimensions, :grid, :over, :movesFound
   def initialize height, width, mines
     @dimensions = {:height => height, :width => width}
@@ -124,6 +125,7 @@ class Game
     end
     
     @over = false
+    @mines = mines
     @movesFound = false
   end
   def [] row, col
@@ -137,9 +139,14 @@ class Game
     rows = height.times.map do |row|
       @grid[(row * width)..((row * width) + width - 1)].join " "
     end
-    return "+" + ("--" * width) + "-+\n| " + rows.join(" |\n| ") + " |\n+" +
-      ("--" * width) + "-+"
-    return "foo"
+    return "\n   Mines: " + self.minesLeft.to_s + "\n+" + ("--" * width) +
+      "-+\n| " + rows.join(" |\n| ") + " |\n+" + ("--" * width) + "-+"
+  end
+  def minesLeft
+    @mines - @grid.count{|cell| :f == cell.mark}
+  end
+  def emptyCells
+    @grid.count{|cell| cell.mark.nil?}
   end
   def check
     "Check whether the game has been won"
@@ -162,6 +169,8 @@ class Game
     while @movesFound
       @movesFound = false
       @grid.each{|cell| cell.checkAdjacent; cell.flagAdjacent}
+      @grid.each{|cell| cell.check} if 0 == self.minesLeft
+      @grid.each{|cell| cell.flag} if self.minesLeft == self.emptyCells
     end
   end
 end
