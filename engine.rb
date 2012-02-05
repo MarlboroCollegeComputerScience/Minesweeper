@@ -3,12 +3,20 @@
 =begin
   A Minesweeper Engine in Ruby
   
+  The engine consists of a Game class and a Cell class.
+  
+  A Cell represents a single square in the game grid.
+  Each Cell knows whether it has a mine, how it is marked, and which cells it is
+  adjacent to.
+  
+  A Game contains grid of cells.
+  
   Sam Auciello | Marlboro College
   Jan 2012     | opensource.org/licenses/MIT
 =end
 
 class Cell
-  "A single cell in the game grid"
+  "A single square in the game grid"
   attr_reader :hasMine, :mark, :game
   attr_accessor :adjacent
   def initialize hasMine, mark, game, adjacent
@@ -34,26 +42,40 @@ class Cell
   end
   def check
     "Handle a click on this cell checking for adjacent mines"
+    return if @game.over
     if @mark.nil?
       if @hasMine
         @game.finish false
       else
         @mark = :c
         if "0" == self.to_s
-          @adjacent.each {|cell| cell.check}
+          @adjacent.each{|cell| cell.check}
         end
       end
     end
   end
   def flag
     "Handle a right-click on this cell flagging it as having a mine"
-    if @mark.nil?
+    return if @game.over
+    case @mark
+    when nil
       @mark = :f
+    when :f
+      @mark = nil
     end
+  end
+  def checkAdjacent
+    "Check all Cells adjacent to this one if Cell's mines have been accounted
+      for by flags"
+    return unless :c == @mark
+    adjMines = @adjacent.count{|cell| cell.hasMine}
+    adjFlags = @adjacent.count{|cell| :f == cell.mark}
+    @adjacent.each{|cell| cell.check} if adjFlags >= adjMines
   end
 end
 
 class Game
+  "A game of minesweeper"
   attr_accessor :dimensions, :grid, :over
   def initialize height, width, mines
     @dimensions = {:height => height, :width => width}
@@ -85,7 +107,12 @@ class Game
     
     @over = false
   end
+  def [] row, col
+    "Access the grid"
+  	@grid[(row * dimensions[:width]) + col]
+  end
   def to_s
+    "Display the grid"
     height = dimensions[:width]
     width = dimensions[:height]
     rows = height.times.map do |row|
@@ -96,6 +123,7 @@ class Game
     return "foo"
   end
   def finish win
+    "End the game: takes a boolian of whether the game was won or lost."
     @over = true
     puts "Game Over"
     puts (win and "you win!") or "you lose"
@@ -106,15 +134,15 @@ end
 if $0 == __FILE__
   g = Game.new 6, 6, 10
   
-  g.grid[35].flag
+  g[5, 5].flag
   puts g
   
-  g.grid[0].check
+  g[0, 0].check
   puts g
   
-  g.grid[5].check
+  g[0, 5].check
   puts g
   
-  g.grid[30].check
+  g[5, 0].check
   puts g
 end
